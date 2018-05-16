@@ -79,7 +79,7 @@ int Start_Servidor(int port){
 	}
 	close(servidor_pointer);
 }
-void * receber_cliente(char * params){ // GENERICO!!!
+void * receber_cliente(char * params){ 
 	char * buffer;
 	size_t tamanho = 1000000,nbytes=0;
 	buffer = malloc(tamanho);
@@ -91,14 +91,14 @@ void * receber_cliente(char * params){ // GENERICO!!!
 			free(buffer);
 			break;
 		}else{
-			buffer = filtro_pacotes(buffer,nbytes); // Retorna ponteiro de resposta
+			buffer = filtro_pacotes(buffer,nbytes); 
 			if(buffer == NULL){
 				free(buffer);
 				close(cliente.socket);
 				return NULL;
 			}
 			if(send(cliente.socket,buffer,tamanho,0) == 0){
-				printf("[Ok] Cliente com resposta \n"); // advinda do filtro de pacotes
+				printf("[Ok] Cliente com resposta \n"); 
 				free(buffer);
 				break;
 			}
@@ -149,51 +149,4 @@ char * filtro_pacotes(char * buffer,size_t tamanho){
 	}
 	*/
 	return NULL;
-}
-char * proxy(char * pacote,size_t tamanho){
-	// Função responsavel por receber pacote HTTP e repassar para um servidor web e retornar um ponteiro para resposta do mesmo.
-	int proxy_socket=0;
-	struct sockaddr_in proxy_settings;
-	size_t nbytes=0;
-	// Definições de socket
-	proxy_socket = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
-	memset(&proxy_settings,0,sizeof(proxy_settings));
-	proxy_settings.sin_family = AF_INET;
-	proxy_settings.sin_addr.s_addr = inet_addr("192.168.0.1");
-	proxy_settings.sin_port = htons(80); // Service WEB default PORT
-	// --------------------
-	if(proxy_socket == -1){
-		printf("[F] Falha no socket do proxy. \n");
-		close(proxy_socket);
-		return NULL;
-	}
-	if(connect(proxy_socket,(struct sockaddr*)&proxy_settings,sizeof(proxy_settings))==-1){
-		printf("[F] Falha ao conectar o proxy no servidor. \n");
-		close(proxy_socket);
-		return NULL;
-	}
-	if((nbytes = send(proxy_socket,pacote,tamanho,0))==-1){
-		printf("[F] Falha em enviar o pacote para o servidor web. \n");
-		close(proxy_socket);
-		return NULL;
-	}else{
-		printf("[Ok] Pacote >> PROXY >> WEBSERVER \n");
-	}
-	if((nbytes = recv(proxy_socket,pacote,1000000,0))==-1){
-		printf("[F] Falha em receber o pacote do WEB SERVER \n");
-		return NULL;
-	}else{
-		printf("[Ok] Pacote recebido com sucesso. \n");
-		return pacote;
-	}
-	close(proxy_socket);
-	return NULL;
-}
-char * montar_pacote(char * pagina){
-	char novo_pacote[1024] = "\0";
-	printf("Montando pacote da pagina: %s \n",pagina);
-	if(strcmp(pagina,"/") == 0){
-		printf("GET raiz \n");
-	}
-
 }
