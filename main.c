@@ -15,9 +15,10 @@ struct clients_infos{									// Struct necessaria para passar informações par
 
 void log(char * txt);									// Função que escreve no arquivo de LOG
 int Start_Server(int port);								// Função que inicializa o servidor na porta passada como (int)parametro
-void * clients(void * params);								// Função que trata o cliente
+void * clients(void * params);							// Função que trata o cliente
+int  firewall(void * infos);							// Função que verifica se  o cliente pode se comunicar com servidor (1-Autorizado,0-Acesso Negado)
 
-int main(int, char * params[]){
+int main(int args, char * params[]){
     Start_Server(80);                                                                   // Inicialização de servidor na porta 80
 }
 
@@ -56,11 +57,15 @@ int Start_Server(int port){
         printf("[Ok] Cliente %s:%d conectado com o servidor. \n",inet_ntoa(clients_settings.sin_addr),port);
         infos_clients.socket_id = clients_socket;                                       // Passa valor do socket do cliente
         memcpy(&infos_clients.settings,&clients_settings,sizeof(clients_settings));     // Passa configurações  (IP,PORTA,FAMILIA)
-        pthread_create(&threads,NULL,&clients,&infos_clients);
-        pthread_join(threads,NULL);
+        if(firewall(&infos_clients)){
+	        pthread_create(&threads,NULL,&clients,&infos_clients);
+	       //pthread_join(threads,NULL);
+        }else{
+        	printf("[F] Cliente %s não autorizado\nDesconectado!!\n",inet_ntoa(clients_settings.sin_addr));
+        	close(clients_socket);
+        }
     }
     close(Socket);                                                                      // fecha o socket
-
 }
 void log(char * txt){
     FILE * wLogs;                                                                       // Aponta para endereço do arquivo
@@ -75,10 +80,13 @@ void * clients(void * params){                                                  
     struct clients_infos infos_clientes;
     memcpy(&infos_clientes,params,sizeof(infos_clientes));                              // Recupera os dados do cliente
 
-    // CODIGO PARA INTERPRETAR OS PACOTES TCP/TCP RECEBIDOS PELO SERVIDOR
+    // CODIGO PARA INTERPRETAR OS PACOTES TCP/TCP RECEBIDOS PELO CLIENTE
 
     // ------------------------------------------------------------------
     close(infos_clientes.socket_id);                                                    // Finaliza conexão com o cliente
     return NULL;
 }
 
+int  firewall(void * infos){															// Verifica se o cliente pode entrar na rede
+	return 1;
+}
